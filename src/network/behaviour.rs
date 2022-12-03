@@ -132,7 +132,7 @@ impl NetworkBehaviour for HiveBehavior {
         }
 
         match self.received_messages.add(&event) {
-            Ok(_) => return,
+            Ok(_) => {}
             Err(CuckooError::NotEnoughSpace) => {
                 println!(
                     "message included but another random message
@@ -141,6 +141,9 @@ impl NetworkBehaviour for HiveBehavior {
             }
         };
 
+        self.events.push_back(NetworkBehaviourAction::GenerateEvent(
+            HiveEvent::RequestVote(event),
+        ));
         println!("on connection handler event: {:?}", event);
     }
 

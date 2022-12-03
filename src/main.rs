@@ -3,11 +3,7 @@ mod node;
 mod protocol;
 
 use crate::network::{behaviour::HiveBehavior, transport::new_transport};
-use libp2p::{
-    floodsub, identity, mdns,
-    swarm::{behaviour::toggle::Toggle, SwarmBuilder},
-    Multiaddr, PeerId, Swarm,
-};
+use libp2p::{identity, swarm::SwarmBuilder, Multiaddr, PeerId, Swarm};
 use std::error::Error;
 
 #[async_std::main]
@@ -16,14 +12,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let peer_id = PeerId::from(local_key.public());
     println!("local peer id: {:?}", peer_id);
 
-    let (transport, bandwith) = new_transport(local_key);
+    let (transport, _) = new_transport(local_key);
 
     let behavior = {
         let hive_behaviour = HiveBehavior::new(peer_id);
-        let mdns_behavior = mdns::async_io::Behaviour::new(mdns::Config::default());
+        //let mdns_behavior = mdns::async_io::Behaviour::new(mdns::Config::default());
+        //mdns::async_io::Behaviour::from(Some(hive_behaviour));
 
-        mdns::async_io::Behaviour::from(Some(hive_behaviour));
-        behavior
+        hive_behaviour
     };
 
     let mut swarm = SwarmBuilder::with_async_std_executor(transport, behavior, peer_id).build();

@@ -1,4 +1,7 @@
-use crate::network::{behaviour::HiveBehavior, protocol::RequestVote};
+use crate::network::{
+    behaviour::{HiveBehavior, HiveEvent},
+    protocol::RequestVote,
+};
 
 use futures::{
     prelude::{stream::StreamExt, *},
@@ -52,36 +55,9 @@ impl Node {
                         println!("Listening on {address:?}");
                     }
 
-                    SwarmEvent::Behaviour(str) => {
-                        println!(
-                            "Received: '{:?}'", str)
+                    SwarmEvent::Behaviour(HiveEvent::RequestVote(request_vote)) => {
+                            println!("Received: '{:?}'", request_vote)
                     }
-
-                    // SwarmEvent::Behaviour(
-                    //     OutEvent::Floodsub(
-                    //         FloodsubEvent::Message(message))) =>
-                    // {
-                    //     println!(
-                    //         "Received: '{:?}' form '{:?}'",
-                    //         String::from_utf8_lossy(&message.data),
-                    //         message.source,
-                    //     )
-                    // },
-
-                    // SwarmEvent::Behaviour(
-                    //     OutEvent::Mdns(
-                    //         MdnsEvent::Discovered(list))) =>
-                    // {
-                    //     for (peer, _) in list {
-                    //         self.transport
-                    //             .behaviour_mut()
-                    //             .floodsub
-                    //             .add_node_to_partial_view(peer);
-
-                    //         println!("Discovered node {:?}", peer);
-                    //     }
-                    // },
-
                     _ => {},
                 }
             }

@@ -55,7 +55,6 @@ pub fn new_transport(local_key: Keypair) -> (Boxed<(PeerId, StreamMuxerBox)>, Ar
         .upgrade(core::upgrade::Version::V1Lazy)
         .authenticate(authentication_config)
         .multiplex(multiplexing_config)
-        .timeout(Duration::from_secs(5))
         .boxed();
 
     (transport, bandwith)
