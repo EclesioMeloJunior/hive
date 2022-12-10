@@ -1,14 +1,9 @@
-use crate::network::{
-    behaviour::{HiveBehavior, HiveEvent},
-    protocol::RequestVote,
-};
-
+use crate::protocol::HiveBehaviour;
 use futures::{
     prelude::{stream::StreamExt, *},
     select,
 };
 use libp2p::{swarm::SwarmEvent, Swarm};
-
 #[derive(Debug)]
 pub enum Role {
     Follower,
@@ -18,11 +13,11 @@ pub enum Role {
 
 pub struct Node {
     pub role: Role,
-    pub transport: Swarm<HiveBehavior>,
+    pub transport: Swarm<HiveBehaviour>,
 }
 
 impl Node {
-    pub fn new(swarm: Swarm<HiveBehavior>) -> Self {
+    pub fn new(swarm: Swarm<HiveBehaviour>) -> Self {
         Node {
             role: Role::Follower,
             transport: swarm,
@@ -37,17 +32,9 @@ impl Node {
         loop {
             select! {
                 line = stdin.select_next_some() => match line {
-                    Ok(ok_line) => {
-                        let request_vote = RequestVote{
-                            term: ok_line.parse::<u32>().unwrap(),
-                            candidate_id: 1,
-                            last_log_term: 1,
-                            last_log_index: 1,
-                        };
-
-                        self.transport.behaviour_mut().publish(request_vote);
-                    },
-                    Err (err) => println!("cannot read line: {:?}", err)
+                    self.transport
+                        .behaviour_mut().gossipsub
+                        .publish(topic.clone(), line.expect("Stdin not to close").as_bytes());
                 },
 
                 event = self.transport.select_next_some() => match event {

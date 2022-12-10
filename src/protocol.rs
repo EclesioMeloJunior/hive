@@ -1,4 +1,11 @@
+use libp2p::{gossipsub::Gossipsub, mdns, swarm::NetworkBehaviour};
 use parity_scale_codec_derive::{Decode, Encode};
+
+#[derive(NetworkBehaviour)]
+pub struct HiveBehaviour {
+    pub gossipsub: Gossipsub,
+    pub mdns: mdns::async_io::Behaviour,
+}
 
 #[derive(Debug, PartialEq, Encode, Decode)]
 pub struct AppendEntries {
