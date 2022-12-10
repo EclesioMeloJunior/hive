@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 
 use libp2p::{
     bandwidth::{self, BandwidthSinks},

@@ -5,22 +5,20 @@ use libp2p::{
         MessageAuthenticity, MessageId, ValidationMode,
     },
     identity::Keypair,
-    kad::record::Key,
     mdns,
     swarm::{DialError, SwarmBuilder},
     Multiaddr, PeerId, Swarm,
 };
 use std::{
-    collections::hash_map::DefaultHasher, error::Error, hash::Hash, hash::Hasher, str::FromStr,
-    time::Duration,
+    collections::hash_map::DefaultHasher, error::Error, hash::Hash, hash::Hasher, time::Duration,
 };
 
 use crate::{network::transport::new_transport, protocol::HiveBehaviour};
 
 pub struct NetworkLayer {
     peer_id: PeerId,
-    transport: Swarm<HiveBehaviour>,
     topics: Vec<IdentTopic>,
+    transport: Swarm<HiveBehaviour>,
 }
 
 impl NetworkLayer {
@@ -47,7 +45,7 @@ impl NetworkLayer {
         let mut supported_topics: Vec<IdentTopic> = vec![];
         for topic in topics {
             let current_topic = IdentTopic::new(topic);
-            gossipsub.subscribe(&current_topic);
+            gossipsub.subscribe(&current_topic)?;
             supported_topics.push(current_topic);
         }
 
