@@ -19,7 +19,7 @@ This command should output the libp2p address of the running instance
 - In the other terminal executes:
 
 ```sh
-cargo run -- {libp2p_address}
+cargo run
 ```
 
-This command will running another instance connected to the previous one
+This command will running another instance that will discover nodes in the network and connect to them
