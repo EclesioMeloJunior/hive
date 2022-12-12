@@ -1,6 +1,5 @@
 mod client;
 mod network;
-mod protocol;
 
 use crate::client::Node;
 use std::error::Error;

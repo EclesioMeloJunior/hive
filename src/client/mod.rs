@@ -1,22 +1,11 @@
 mod network;
+mod protocol;
 
 use std::error::Error;
 
-use crate::protocol::{HiveBehaviour, HiveBehaviourEvent};
-use futures::{
-    prelude::{stream::StreamExt, *},
-    select,
-};
-use libp2p::{
-    gossipsub::{GossipsubEvent, IdentTopic},
-    identity::{self, Keypair},
-    mdns,
-    multihash::Multihash,
-    swarm::{DialError, SwarmEvent},
-    Multiaddr, Swarm,
-};
+use libp2p::identity::{self, Keypair};
 
-use network::NetworkLayer;
+use network::{DialWithPeerError, NetworkLayer};
 
 #[derive(Debug)]
 pub enum Role {
@@ -29,30 +18,6 @@ pub struct Node {
     pub role: Role,
     pub local_key: Keypair,
     pub network: NetworkLayer,
-}
-
-#[derive(Debug)]
-pub enum DialWithPeerError {
-    NetworkLayerFailed(DialError),
-    UnexpectedPeerId(String),
-}
-
-impl std::fmt::Display for DialWithPeerError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match self {
-            Self::NetworkLayerFailed(dial_error) => write!(f, "{}", dial_error),
-            Self::UnexpectedPeerId(s) => write!(f, "{}", s),
-        }
-    }
-}
-
-impl std::error::Error for DialWithPeerError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            Self::NetworkLayerFailed(dial_error) => Some(dial_error),
-            Self::UnexpectedPeerId(s) => None,
-        }
-    }
 }
 
 impl Node {
@@ -86,54 +51,8 @@ impl Node {
     }
 
     pub async fn start(&mut self) {
-        let mut stdin = async_std::io::BufReader::new(async_std::io::stdin())
-            .lines()
-            .fuse();
-
         loop {
-            select! {
-                line = stdin.select_next_some() => {
-                    let topic = IdentTopic::new("request_topic");
-                    let publish = self.network.publish(topic, line.expect("failed to read input line").as_bytes());
-
-                    if let Err(err) = publish {
-                        println!("Publish error: {:?}", err);
-                    }
-                },
-
-
-                event = self.network.next_event() => match event {
-                    SwarmEvent::NewListenAddr { address, .. } => {
-                        println!("Listening on {address:?}");
-                    },
-
-                    SwarmEvent::Behaviour(HiveBehaviourEvent::Mdns(mdns::Event::Discovered(list))) => {
-                        for (peer_id, _multiaddr) in list {
-                            println!("mDNS discovered a new peer: {}", peer_id);
-                            self.network.add_explicit_peer(&peer_id);
-                        }
-                    },
-
-                    SwarmEvent::Behaviour(HiveBehaviourEvent::Mdns(mdns::Event::Expired(list))) => {
-                        for (peer_id, _multiaddr) in list {
-                            println!("mDNS discovered a new peer: {}", peer_id);
-                            self.network.remove_explicit_peer(&peer_id);
-                        }
-                    },
-
-                    SwarmEvent::Behaviour(HiveBehaviourEvent::Gossipsub(GossipsubEvent::Message {
-                        propagation_source: peer_id,
-                        message_id: id,
-                        message,
-                    })) => {
-                        println!(
-                            "Got message: '{}' with id: {id} from peer: {peer_id}",
-                            String::from_utf8_lossy(&message.data),
-                        );
-                    },
-                    _ => {},
-                }
-            }
+            self.network.next_event().await;
         }
     }
 }
